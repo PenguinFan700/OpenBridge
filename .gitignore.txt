@@ -1,0 +1,11 @@
+# 排除所有子資料夾內的 node_modules
+**/node_modules/
+
+# 排除編譯產物
+open-bridge-client/build/
+open-bridge-client/dist/
+
+# 排除環境變數與暫存檔
+.env
+.DS_Store
+Thumbs.db
