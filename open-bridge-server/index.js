@@ -166,33 +166,50 @@ io.on("connection", (socket) => {
     });
 
     socket.on("dealCards", () => {
-        const roomId = socket.roomId;
-        const room = rooms[roomId];
-        if (room && room.gameState === 'WAITING') {
-            const allReady = Object.values(room.seats).every(s => s !== null) && 
-                             Object.values(room.readyPlayers).every(v => v === true);
-            if (!allReady) return;
+    const roomId = socket.roomId;
+    const room = rooms[roomId];
+    if (room && room.gameState === 'WAITING') {
+        const allReady = Object.values(room.seats).every(s => s !== null) && 
+                         Object.values(room.readyPlayers).every(v => v === true);
+        if (!allReady) return;
 
-            const hands = shuffleAndDeal();
-            room.playerHands = hands;
-            room.gameState = 'BETTING';
-            room.bettingCountdown = 15;
+        const hands = shuffleAndDeal();
+        room.playerHands = hands;
+        room.gameState = 'BETTING';
+        room.bettingCountdown = 15;
 
-            Object.keys(room.seats).forEach(seat => {
-                io.to(room.seats[seat]).emit("yourHand", hands[seat]);
-            });
+        // 1. 發牌給座位上的玩家
+        Object.keys(room.seats).forEach(seat => {
+            const pid = room.seats[seat];
+            if (pid) io.to(pid).emit("yourHand", hands[seat]);
+        });
 
-            Object.keys(room.bets).forEach(specId => {
-                const bet = room.bets[specId];
-                if (bet && bet.targetSeat) {
-                    const targetHand = hands[bet.targetSeat];
-                    const formattedHand = { 'S':[], 'H':[], 'D':[], 'C':[] };
-                    targetHand.forEach(c => formattedHand[c[0]].push(c));
-                    const oddsResult = calculateDynamicOdds(formattedHand);
-                    io.to(specId).emit("yourHand", targetHand);
-                    io.to(specId).emit("oddsUpdate", oddsResult);
-                }
-            });
+        // 2. 發牌給觀眾（包含預設邏輯）
+        // 取得房內所有不在座位上的人
+        const allClients = io.sockets.adapter.rooms.get(roomId);
+        const seatedPlayers = Object.values(room.seats);
+
+        allClients.forEach(socketId => {
+            if (!seatedPlayers.includes(socketId)) {
+                // 如果是觀眾，檢查是否有選位，沒選則預設看 N
+                const betInfo = room.bets[socketId] || { targetSeat: 'N' };
+                const chosenSeat = betInfo.targetSeat || 'N';
+                const targetHand = hands[chosenSeat];
+
+                // 修正：正確解析 S-2 格式的花色
+                const formattedHand = { 'S':[], 'H':[], 'D':[], 'C':[] };
+                targetHand.forEach(c => {
+                    const suit = c.split('-')[0]; // 取出橫槓前的字元
+                    if (formattedHand[suit]) formattedHand[suit].push(c);
+                });
+
+                const oddsResult = calculateDynamicOdds(formattedHand);
+                
+                // 定向推播
+                io.to(socketId).emit("yourHand", targetHand);
+                io.to(socketId).emit("oddsUpdate", oddsResult);
+            }
+        });
 
             if (bettingTimers[roomId]) clearInterval(bettingTimers[roomId]);
             
