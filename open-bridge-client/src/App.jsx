@@ -324,54 +324,58 @@ function App() {
       <div style={{ gridColumn: '2', gridRow: '3', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Seat pos={getSeatForDirection('BOTTOM')} label={room.gameState === 'WAITING' ? "South" : "Me"} />
         <div style={{ marginTop: '15px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {hand.map(c => {
-            // 1. 解析 S-A 格式
-            const [suit, rank] = c.split('-'); 
-            const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };
-            
-            // 2. 顏色判定
-            const isRed = suit === 'H' || suit === 'D';
-            const cardColor = isRed ? '#e74c3c' : '#2c3e50';
-        
-            return (
-              <div key={c} 
-                onClick={() => handlePlayCard(c)}
-                style={{
-                  ...styles.card,
-                  width: '60px',        // 固定寬度
-                  height: '90px',       // 固定高度
-                  color: cardColor,
-                  backgroundColor: '#fff',
-                  borderRadius: '6px',
-                  border: '1px solid #ccc',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '6px',
-                  fontWeight: 'bold',
-                  fontSize: '18px',
-                  // 保持您原本的出牌視覺回饋邏輯
-                  boxShadow: (room.gameState === 'PLAYING' && isMyTurn) ? '0 0 12px #f1c40f' : '0 2px 5px rgba(0,0,0,0.15)',
-                  transform: (room.gameState === 'PLAYING' && isMyTurn) ? 'translateY(-10px)' : 'none',
-                  cursor: (room.gameState === 'PLAYING' && isMyTurn) ? 'pointer' : 'default',
-                  transition: 'all 0.2s',
-                }}>
-                {/* 左上角點數 */}
-                <div style={{ textAlign: 'left', lineHeight: 1 }}>{rank === 'T' ? '10' : rank}</div>
-                
-                {/* 中間大花色圖標 */}
-                <div style={{ fontSize: '1.6em', alignSelf: 'center', opacity: 0.9 }}>
-                  {suitSymbols[suit]}
-                </div>
-                
-                {/* 右下角點數 (倒轉效果) */}
-                <div style={{ textAlign: 'right', lineHeight: 1, transform: 'rotate(180deg)' }}>
-                  {rank === 'T' ? '10' : rank}
-                </div>
+        {hand.map(c => {   const [suit, rank] = c.split('-');  
+          const suitSymbols = { 'S': '♠', 'H': '♥', 'D': '♦', 'C': '♣' };  
+          const isRed = suit === 'H' || suit === 'D';
+          const cardColor = isRed ? '#e74c3c' : '#2c3e50';      
+          return (
+            <div key={c}         onClick={() => handlePlayCard(c)}
+              style={{
+                ...styles.card,
+                width: '60px',
+                height: '90px',
+                color: cardColor,
+                backgroundColor: '#fff',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                position: 'relative', // 必須設為 relative，讓內層絕對定位生效
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontWeight: 'bold',
+                boxShadow: (room.gameState === 'PLAYING' && isMyTurn) ? '0 0 12px #f1c40f' : '0 2px 5px rgba(0,0,0,0.15)',
+                transform: (room.gameState === 'PLAYING' && isMyTurn) ? 'translateY(-10px)' : 'none',
+                cursor: (room.gameState === 'PLAYING' && isMyTurn) ? 'pointer' : 'default',
+                transition: 'all 0.2s',
+              }}>
+              
+              {/* 1. 左上角點數與花色 */}
+              <div style={{ position: 'absolute', top: '3px', left: '4px', textAlign: 'center', lineHeight: 1 }}>
+                <div style={{ fontSize: '14px' }}>{rank === 'T' ? '10' : rank}</div>
+                <div style={{ fontSize: '10px' }}>{suitSymbols[suit]}</div>
               </div>
-            );
-          })}
-        </div>
+              
+              {/* 2. 中間大型花色圖標 */}
+              <div style={{ fontSize: '2em', opacity: 0.9 }}>
+                {suitSymbols[suit]}
+              </div>
+              
+              {/* 3. 右下角點數與花色 (修正位置與對齊) */}
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '3px', 
+                right: '4px', 
+                textAlign: 'center', 
+                lineHeight: 1, 
+                transform: 'rotate(180deg)' 
+              }}>
+                <div style={{ fontSize: '14px' }}>{rank === 'T' ? '10' : rank}</div>
+                <div style={{ fontSize: '10px' }}>{suitSymbols[suit]}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       </div>
 
       {/* 觀眾預測區：整合方位選擇與預覽 */}
