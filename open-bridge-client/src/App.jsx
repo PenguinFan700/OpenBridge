@@ -5,7 +5,7 @@ import { sortHand } from './bridgeUtils.js';
 import BiddingBox from './BiddingBox.jsx';
 
 const positions = ['N', 'W', 'S', 'E'];
-const socket = io('http://localhost:3001');
+const socket = io('https://open-bridge-server.onrender.com');
 // 計算調和平均數（綜合賠率）
 const calculateCombinedOdds = (oddsArray) => {
   if (!oddsArray || oddsArray.length === 0) return 0;
